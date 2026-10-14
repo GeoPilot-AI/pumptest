@@ -103,3 +103,19 @@ def test_vennebulten_neuman(vennebulten: PumpingTest) -> None:
 def test_vennebulten_picks_the_unconfined_model(vennebulten: PumpingTest) -> None:
     rmse = {m.name: fit(vennebulten, m).rmse for m in (Theis(), HantushJacob(), Neuman())}
     assert rmse["Neuman"] < rmse["Hantush-Jacob"] < rmse["Theis"]
+
+
+def test_hoogezand_full_record_with_fitted_casing_radius() -> None:
+    # Fitting the effective casing radius explains the early record too, and
+    # lands on the book's transmissivity with rc about half the casing: the
+    # pump column takes up the rest.
+    t, s, rate = _hoogezand()
+    keep = t >= 5.0 / SECONDS_PER_DAY
+    test = PumpingTest(
+        Well(0.185), Schedule.constant(rate), [Observation("pumped well", 0.0, t[keep], s[keep])]
+    )
+    model = PapadopulosCooper(skin=True, casing_radius=True)
+    result = fit(test, model, fixed={"S": 4e-4})
+    assert result.values["T"] == pytest.approx(1800.0, rel=0.05)
+    assert 0.05 < result.values["rc"] < 0.185
+    assert result.rmse < 0.015

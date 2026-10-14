@@ -193,6 +193,18 @@ def textbook_rows() -> list[str]:
         f"RMSE {_fmt(skin.rmse)} m |"
     )
 
+    full = PumpingTest(
+        Well(0.185),
+        Schedule.constant(rate),
+        [Observation("pumped well", 0.0, t[t >= 5.0 / DAY_S], sw[t >= 5.0 / DAY_S])],
+    )
+    rcfit = fit(full, PapadopulosCooper(skin=True, casing_radius=True), fixed={"S": 4e-4})
+    rows.append(
+        f"| Hoogezand single well | T, full record, fitted rc (m2/d) | 1800 "
+        f"| {_fmt(rcfit.values['T'])} | rc {_fmt(rcfit.values['rc'])} m of 0.185, skin "
+        f"{_fmt(rcfit.values['Sk'])}, RMSE {_fmt(rcfit.rmse)} m |"
+    )
+
     vb = np.loadtxt(DATA / "venne_deep.txt", comments="#")
     vb = vb[vb[:, 0] > 0]
     venne = PumpingTest(

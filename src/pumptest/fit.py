@@ -47,10 +47,33 @@ class FitResult:
     success: bool
     message: str
 
+    @property
+    def aic(self) -> float:
+        """Akaike information criterion for least squares, n ln(SSR / n) + 2k.
+
+        Lower is better. It only compares fits to the same observations: a
+        model with more parameters has to earn each one by a lower residual.
+        """
+
+        n, k = self.points, len(self.estimated)
+        ssr = self.rmse**2 * n
+        return float(n * math.log(max(ssr, 1e-300) / n) + 2 * k)
+
+    @property
+    def aicc(self) -> float:
+        """AIC with the small-sample correction, the one to use below about 40 points."""
+
+        n, k = self.points, len(self.estimated)
+        if n - k - 1 <= 0:
+            return math.inf
+        return self.aic + 2.0 * k * (k + 1) / (n - k - 1)
+
     def summary(self) -> str:
         """A plain-text table of the result, for a terminal or a report."""
 
-        lines = [f"{self.model} fit to {self.points} points, RMSE {self.rmse:.4g}"]
+        lines = [
+            f"{self.model} fit to {self.points} points, RMSE {self.rmse:.4g}, AICc {self.aicc:.4g}"
+        ]
         for name, value in self.values.items():
             err = self.standard_errors.get(name)
             spread = f" +/- {err:.3g}" if err is not None and math.isfinite(err) else " (fixed)"
@@ -96,6 +119,7 @@ def starting_points(test: PumpingTest, model: Model) -> list[dict[str, float]]:
         "B": [10.0 * reach, 100.0 * reach, 1000.0 * reach],
         # Single-well tests routinely carry skins of 20 to 30 (Hoogezand: 27).
         "Sk": [0.0, 5.0, 25.0],
+        "rc": [test.well.storage_radius],
     }
     if "Sy" in model.parameter_names:
         # On an unconfined record the late Cooper-Jacob storativity is mostly Sy.
@@ -206,3 +230,25 @@ def fit(
         success=bool(best.success),
         message=str(best.message),
     )
+
+
+def compare(
+    test: PumpingTest,
+    models: Iterable[Model],
+    *,
+    observations: Iterable[str] | None = None,
+) -> list[FitResult]:
+    """Fit each model to the same observations and rank them by AICc, best first.
+
+    A model that cannot be fitted to ``test`` (the unconfined solution without
+    a thickness, say) is left out rather than failing the comparison.
+    """
+
+    names = None if observations is None else list(observations)
+    results = []
+    for model in models:
+        try:
+            results.append(fit(test, model, observations=names))
+        except ValueError:
+            continue
+    return sorted(results, key=lambda r: r.aicc)

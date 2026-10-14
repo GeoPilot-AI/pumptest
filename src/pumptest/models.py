@@ -147,25 +147,36 @@ class PapadopulosCooper(Model):
 
     The usual solution for dug wells. The screen and casing radii come from
     the :class:`~pumptest.data.Well`. With ``skin=True`` a dimensionless skin
-    factor (Agarwal et al., 1970) is fitted as well.
+    factor (Agarwal et al., 1970) is fitted as well. With
+    ``casing_radius=True`` the effective casing radius rc is fitted instead of
+    taken from the well: a pump column or riser in the casing shrinks the
+    area the water level falls in, and the Hoogezand test showed a record that
+    a 0.185 m casing could not produce.
     """
 
     name = "Papadopulos-Cooper"
     reference = "Papadopulos, I.S. and Cooper, H.H. (1967). Water Resour. Res. 3(1), 241-244."
 
-    def __init__(self, *, skin: bool = False) -> None:
+    def __init__(self, *, skin: bool = False, casing_radius: bool = False) -> None:
         self.skin = skin
-        extra = (Parameter("Sk", "Skin factor", "-", -5.0, 100.0, log=False),) if skin else ()
-        self.parameters = (TRANSMISSIVITY, STORATIVITY, *extra)
+        self.fit_casing = casing_radius
+        extra: tuple[Parameter, ...] = ()
         if skin:
-            self.name = "Papadopulos-Cooper with skin"
+            extra += (Parameter("Sk", "Skin factor", "-", -5.0, 100.0, log=False),)
+        if casing_radius:
+            extra += (Parameter("rc", "Effective casing radius", "L", 1e-4, 10.0),)
+        self.parameters = (TRANSMISSIVITY, STORATIVITY, *extra)
+        options = [label for on, label in ((skin, "skin"), (casing_radius, "fitted rc")) if on]
+        if options:
+            self.name = f"Papadopulos-Cooper with {' and '.join(options)}"
 
     def unit_response(
         self, values: Mapping[str, float], test: PumpingTest, observation: Observation
     ) -> Response:
         t_, s_ = values["T"], values["S"]
         skin = values.get("Sk", 0.0)
-        rw, rc = test.well.radius, test.well.storage_radius
+        rw = test.well.radius
+        rc = values.get("rc", test.well.storage_radius)
         r = test.radius_of(observation)
         at_well = observation.at_pumping_well
 

@@ -22,6 +22,7 @@ from pumptest import (
     Schedule,
     Theis,
     Well,
+    compare,
     fit,
 )
 from pumptest.fit import starting_points
@@ -178,3 +179,34 @@ def test_summary_reports_a_failed_fit() -> None:
     result = fit(test, Theis())
     failed = type(result)(**{**result.__dict__, "success": False, "message": "stalled"})
     assert "warning: stalled" in failed.summary()
+
+
+def test_information_criteria_and_compare() -> None:
+    truth = {"T": 800.0, "S": 5e-4, "B": 400.0}
+    test = synthetic(HantushJacob(), truth, noise=0.001)
+    ranked = compare(test, [Theis(), HantushJacob(), Neuman()])
+    assert ranked[0].model == "Hantush-Jacob"
+    assert [r.aicc for r in ranked] == sorted(r.aicc for r in ranked)
+    best = ranked[0]
+    assert best.aicc > best.aic
+    assert "AICc" in best.summary()
+    # Without a thickness the unconfined model is skipped, not fatal.
+    flat = synthetic(Theis(), {"T": 250.0, "S": 2e-4}, thickness=None)
+    names = [r.model for r in compare(flat, [Theis(), Neuman()], observations=["r30"])]
+    assert names == ["Theis"]
+
+
+def test_aicc_is_infinite_without_spare_points() -> None:
+    t = np.array([0.01, 0.1])
+    test = PumpingTest(
+        Well(0.1), Schedule.constant(100.0), [Observation("two", 10.0, t, np.array([0.1, 0.3]))]
+    )
+    assert math.isinf(fit(test, Theis()).aicc)
+
+
+def test_papadopulos_cooper_model_names() -> None:
+    assert PapadopulosCooper().name == "Papadopulos-Cooper"
+    assert PapadopulosCooper(casing_radius=True).name == "Papadopulos-Cooper with fitted rc"
+    both = PapadopulosCooper(skin=True, casing_radius=True)
+    assert both.name == "Papadopulos-Cooper with skin and fitted rc"
+    assert both.parameter_names == ("T", "S", "Sk", "rc")

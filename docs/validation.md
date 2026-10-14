@@ -35,6 +35,7 @@ compared within what a graph resolves. Data transcribed in `tests/data/kdr`.
 | Well 1 step test | C (d2/m5) | 1.45e-07 | 1.561e-07 | same fit |
 | Hoogezand single well | T, Jacob (m2/d) | 1800 | 1928 | slope 0.07 m/cycle read by eye, 0.06547 by regression |
 | Hoogezand single well | T with skin, S = 4e-4 (m2/d) | not published | 1928 | skin 27.44, RMSE 0.004026 m |
+| Hoogezand single well | T, full record, fitted rc (m2/d) | 1800 | 1817 | rc 0.08938 m of 0.185, skin 25.52, RMSE 0.009282 m |
 | Vennebulten unconfined | T, Neuman (m2/d) | 1447 to 1616 | 1335 | RMSE 0.003035 m; Theis 0.01008, Hantush 0.005672 |
 | Vennebulten unconfined | S | 5.2e-4 | 0.0005613 | |
 | Vennebulten unconfined | Sy | 4.9e-3 (the book: unreasonably low) | 0.01158 | |
