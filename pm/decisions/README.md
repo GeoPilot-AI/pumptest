@@ -13,3 +13,4 @@ own record and supersedes the earlier one by reference.
 | 3 | [Consistent units, never converted inside the solvers](0003-consistent-units-no-conversion.md) | 2026-10-14 | accepted |
 | 4 | [Solutions in the Laplace domain, inverted by Stehfest](0004-laplace-domain-with-stehfest.md) | 2026-10-14 | accepted |
 | 5 | [Validation against published fits and published tables](0005-validation-against-published-results.md) | 2026-10-14 | accepted |
+| 6 | [Step-drawdown coefficients by least squares in drawdown](0006-step-test-least-squares-in-drawdown.md) | 2026-10-14 | accepted |

@@ -153,11 +153,16 @@ class StepTestResult:
 
 
 def step_drawdown(rates: npt.ArrayLike, drawdowns: npt.ArrayLike) -> StepTestResult:
-    """Fit s / Q = B + C Q to the drawdown reached at the end of each step.
+    """Fit s = B Q + C Q**2 to the drawdown reached in each step.
 
     Give the drawdown each step reached after the same elapsed time in the
     step, or the cumulative drawdown at the end of equal-length steps (the
     Hantush-Bierschenk increments are summed the same way).
+
+    The fit minimises the error in drawdown, which is what was measured.
+    The textbook plot of s / Q against Q weights the low-rate steps up by
+    1 / Q; on Clark's "Well 1" that line misses the drawdowns by 0.119 m
+    where this one misses by 0.096 m.
     """
 
     q = np.asarray(rates, dtype=np.float64)
@@ -166,6 +171,6 @@ def step_drawdown(rates: npt.ArrayLike, drawdowns: npt.ArrayLike) -> StepTestRes
         raise ValueError("need at least two steps, each with a rate and a drawdown")
     if np.any(q <= 0):
         raise ValueError("step rates must be positive")
-    c, b = np.polyfit(q, s / q, 1)
+    (b, c), *_ = np.linalg.lstsq(np.column_stack([q, q * q]), s, rcond=None)
     eff = tuple(float(b * x / (b * x + c * x * x)) for x in q)
     return StepTestResult(float(b), float(c), tuple(float(x) for x in q), eff)

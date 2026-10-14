@@ -94,7 +94,8 @@ def starting_points(test: PumpingTest, model: Model) -> list[dict[str, float]]:
         "T": [trans],
         "S": [stor],
         "B": [10.0 * reach, 100.0 * reach, 1000.0 * reach],
-        "Sk": [0.0, 5.0],
+        # Single-well tests routinely carry skins of 20 to 30 (Hoogezand: 27).
+        "Sk": [0.0, 5.0, 25.0],
     }
     if "Sy" in model.parameter_names:
         # On an unconfined record the late Cooper-Jacob storativity is mostly Sy.
