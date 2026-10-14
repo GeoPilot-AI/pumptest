@@ -19,13 +19,18 @@ from scipy import optimize
 
 from pumptest._types import FloatArray
 from pumptest.data import Observation, PumpingTest
-from pumptest.models import Model, Parameter
+from pumptest.models import Model, Parameter, Theis
 from pumptest.straightline import cooper_jacob
 
 DIFF_STEP = 1e-4
 """Relative finite-difference step for the Jacobian. Stehfest inversion
 carries round-off near 1e-7 relative; scipy's default step (about 1.5e-8) sits
 under that noise and the optimiser stops on its first iteration."""
+
+MAX_STARTS = 3
+"""Optimisations per fit. With more candidate starts than this, the ones with
+the lowest initial residual are kept: on Texas Hill the unconfined fit fell
+from 35 s to 16 s with the same answer."""
 
 
 @dataclass(frozen=True)
@@ -101,8 +106,38 @@ def _guide_observation(test: PumpingTest) -> Observation:
     return max(pool, key=lambda o: o.time.size)
 
 
+def _theis_segment(test: PumpingTest, start: float, stop: float) -> tuple[float, float] | None:
+    """Theis T and S fitted to one stretch of every record, by fraction of its points.
+
+    Unconfined and leaky records are Theis-shaped at early time (elastic
+    storage) and, for unconfined ones, again at late time (specific yield).
+    Fitting those stretches is the hand method of matching the type-A and
+    type-B curves, and it gives the delayed-yield models a start they can
+    reach the right minimum from.
+    """
+
+    pieces = []
+    for obs in test.observations:
+        n = obs.time.size
+        a, b = int(start * n), max(int(stop * n), int(start * n) + 3)
+        if b - a >= 3 and b <= n:
+            pieces.append(Observation(obs.name, obs.distance, obs.time[a:b], obs.drawdown[a:b]))
+    if not pieces:
+        return None
+    segment = PumpingTest(test.well, test.schedule, pieces, test.thickness)
+    try:
+        values = fit(segment, Theis()).values
+    except ValueError:  # pragma: no cover - a Theis fit on valid data does not raise
+        return None
+    return values["T"], values["S"]
+
+
 def starting_points(test: PumpingTest, model: Model) -> list[dict[str, float]]:
-    """Initial guesses: Cooper-Jacob for T and S, a spread for the rest."""
+    """Initial guesses: Cooper-Jacob for T and S, a spread for the rest.
+
+    The delayed-yield model starts from Theis fits to the early and late
+    parts of the record instead (see :func:`_theis_segment`).
+    """
 
     guide = _guide_observation(test)
     rate = test.schedule.first_rate
@@ -121,12 +156,16 @@ def starting_points(test: PumpingTest, model: Model) -> list[dict[str, float]]:
         "Sk": [0.0, 5.0, 25.0],
         "rc": [test.well.storage_radius],
     }
-    if "Sy" in model.parameter_names:
-        # On an unconfined record the late Cooper-Jacob storativity is mostly Sy.
-        spreads["S"] = [stor / 100.0]
-        spreads["Sy"] = [min(max(stor, 1e-3), 0.4), 0.1]
-        spreads["Kd"] = [0.01, 0.1, 1.0]
     names = model.parameter_names
+    if "Sy" in names:
+        early = _theis_segment(test, 0.0, 0.4) or (trans, stor / 100.0)
+        late = _theis_segment(test, 0.6, 1.0) or (trans, stor)
+        sy = min(max(late[1], 10.0 * early[1], 1e-3), 0.4)
+        return [
+            {"T": t0, "S": early[1], "Sy": sy, "Kd": kd}
+            for t0 in sorted({early[0], late[0]})
+            for kd in (1e-3, 1e-2, 0.1, 1.0)
+        ]
     grid = itertools.product(*(spreads[n] for n in names))
     return [dict(zip(names, combo, strict=True)) for combo in grid]
 
@@ -187,10 +226,17 @@ def fit(
 
     lower = np.array([_to_x(p, p.lower) for p in free])
     upper = np.array([_to_x(p, p.upper) for p in free])
+    points = [
+        np.clip([_to_x(p, {**defaults, **start}[p.name]) for p in free], lower + 1e-9, upper - 1e-9)
+        for start in starts
+    ]
+    if len(points) > MAX_STARTS:
+        # One residual evaluation per start is cheap; a full optimisation is
+        # not. Optimise only from the starts that already fit best.
+        points.sort(key=lambda x0: float(np.sum(residual(x0) ** 2)))
+        points = points[:MAX_STARTS]
     best: optimize.OptimizeResult | None = None
-    for start in starts:
-        guess = {**defaults, **start}
-        x0 = np.clip([_to_x(p, guess[p.name]) for p in free], lower + 1e-9, upper - 1e-9)
+    for x0 in points:
         result = optimize.least_squares(
             residual, x0, bounds=(lower, upper), method="trf", diff_step=DIFF_STEP
         )

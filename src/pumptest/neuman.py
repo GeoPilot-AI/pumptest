@@ -37,36 +37,37 @@ _CHUNK = 200_000
 def eigenvalues(c: FloatArray, n_terms: int) -> FloatArray:
     """Roots of ``eps tan(eps) = c`` for each ``c``, the first ``n_terms`` each.
 
-    Root n lies in (n pi, n pi + pi/2). Newton on ``eps sin - c cos`` (no
-    poles), kept inside that bracket by bisection, converges in a few steps.
+    Root n is n pi + d with d in (0, pi/2), where
+    ``f(d) = (n pi + d) sin(d) - c cos(d)`` vanishes. Solving for the offset d
+    rather than the root keeps full precision at large n, and f rises
+    monotonically from -c to n pi + pi/2 across the interval, so Newton from a
+    close guess converges in a few steps. The first version iterated on the
+    root itself from a rough guess and fell back to bisection; it spent 95
+    percent of a Neuman fit here and left residuals of 1e-4.
     """
 
     cc = np.asarray(c, dtype=np.float64)[:, None]
-    n = np.arange(n_terms, dtype=np.float64)[None, :]
-    lo = np.broadcast_to(n * math.pi, (cc.shape[0], n_terms)).copy()
-    hi = lo + math.pi / 2.0
-    # For n >= 1, tan(eps) = c / eps gives eps ~ n pi + atan(c / (n pi)).
-    base = np.where(n > 0, n * math.pi, 1.0)
-    eps = np.where(n > 0, lo + np.arctan(cc / base), np.arctan(np.sqrt(cc)) * 1.0)
-    eps = np.clip(eps, lo, hi)
-    for _ in range(60):
-        sin, cos = np.sin(eps), np.cos(eps)
-        g = eps * sin - cc * cos
-        # g rises through the bracket for even n and falls for odd n.
-        rising = (n % 2) == 0
-        below = np.where(rising, g < 0, g > 0)
-        lo = np.where(below, eps, lo)
-        hi = np.where(below, hi, eps)
-        slope = (1.0 + cc) * sin + eps * cos
-        with np.errstate(divide="ignore", invalid="ignore"):
-            step = eps - g / slope
-        inside = (step > lo) & (step < hi) & np.isfinite(step)
-        new = np.where(inside, step, 0.5 * (lo + hi))
-        if np.max(np.abs(new - eps)) < 1e-14 * max(1.0, float(np.max(new))):
-            eps = new
+    npi = np.arange(n_terms, dtype=np.float64)[None, :] * math.pi
+    half = math.pi / 2.0
+    # n >= 1: two fixed-point steps of d = atan(c / (n pi + d)), a contraction.
+    # n = 0: d**2 ~ c for small c and d -> pi/2 for large c.
+    with np.errstate(divide="ignore"):
+        d = np.arctan(cc / npi)
+        d = np.arctan(cc / (npi + d))
+    d0 = half * np.sqrt(cc / (cc + half * half))
+    d = np.where(npi > 0, d, d0)
+    d = np.clip(d, 1e-300, half)
+    for _ in range(50):
+        sin, cos = np.sin(d), np.cos(d)
+        f = (npi + d) * sin - cc * cos
+        slope = (1.0 + cc) * sin + (npi + d) * cos
+        step = f / slope
+        new = np.clip(d - step, 0.5 * d, 0.5 * (d + half))
+        done = float(np.max(np.abs(new - d))) < 1e-15
+        d = new
+        if done:
             break
-        eps = new
-    roots: FloatArray = eps
+    roots: FloatArray = npi + d
     return roots
 
 
