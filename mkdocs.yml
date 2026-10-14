@@ -1,8 +1,73 @@
 site_name: pumptest
-site_description: Pumping test analysis in Python
+site_description: Pumping test analysis in Python, validated against AQTESOLV
+site_author: Piezoline Technologies Private Limited
 repo_url: https://github.com/GeoPilot-AI/pumptest
+repo_name: GeoPilot-AI/pumptest
+copyright: Copyright &copy; 2026 Piezoline Technologies Private Limited. MIT licence.
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue grey
+      accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue grey
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+
 nav:
   - Home: index.md
-  - Solutions: solutions.md
+  - Getting started: getting-started.md
+  - Tutorials:
+      - Confined aquifer, several wells: tutorials/confined.md
+      - Choosing the model: tutorials/model-choice.md
+      - Single-well and step tests: tutorials/single-well.md
+      - Your own field data: tutorials/field-data.md
+  - Theory: theory.md
   - Validation: validation.md
-  - Decisions: decisions.md
+  - API reference: api.md
+  - Design decisions: decisions.md
+  - Contributing: contributing.md
+  - Citing: citing.md
+  - Changelog: changelog.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.details
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: false
+            show_root_heading: true
+            members_order: source
+            docstring_style: sphinx

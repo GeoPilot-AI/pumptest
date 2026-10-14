@@ -8,6 +8,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+import matplotlib
+import pytest
+
 REPO = Path(__file__).resolve().parents[1]
 
 NUMBER_TOLERANCE = 5e-3
@@ -45,10 +48,23 @@ def test_number_comparison_is_tolerant_but_not_blind() -> None:
     assert not _same("Theis", "Neuman")
 
 
-def test_readme_examples_run() -> None:
-    readme = (REPO / "README.md").read_text(encoding="utf-8")
-    blocks = re.findall(r"```python\n(.*?)```", readme, flags=re.S)
-    assert blocks, "the README should carry at least one runnable example"
-    namespace: dict[str, object] = {}
+PAGES = [REPO / "README.md", *sorted((REPO / "docs").rglob("*.md"))]
+
+
+@pytest.mark.parametrize("page", PAGES, ids=lambda p: str(p.relative_to(REPO)))
+def test_documentation_examples_run(
+    page: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Each page is one script, run top to bottom in a scratch directory, the
+    # way a reader would paste it.
+    matplotlib.use("Agg")
+    monkeypatch.chdir(tmp_path)
+    blocks = re.findall(r"```python\n(.*?)```", page.read_text(encoding="utf-8"), flags=re.S)
+    namespace: dict[str, object] = {"__name__": "__docs__"}
     for block in blocks:
         exec(block, namespace)
+
+
+def test_readme_and_every_tutorial_have_examples() -> None:
+    for page in [REPO / "README.md", *(REPO / "docs" / "tutorials").glob("*.md")]:
+        assert "```python" in page.read_text(encoding="utf-8"), page.name
