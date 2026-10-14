@@ -23,7 +23,7 @@ analytical solutions, with automatic fitting across any number of wells.
 On three tests from the AQTESOLV manual and four open pumping tests analysed
 with welltestpy, the fitted parameters match the published ones, and on the
 same data the fit is at least as good. The well functions are checked
-against independent evaluations and published tables. Every number on
+against independent evaluations of their published formulas. Every number on
 the [validation](validation.md) page is regenerated from the code, and a test
 fails if the page and the code disagree.
 

@@ -122,6 +122,14 @@ def welltestpy_rows() -> list[str]:
     return rows
 
 
+def _well_function_tolerance() -> float:
+    # Read from the test itself, so the page cannot claim a tighter check than it runs.
+    sys.path.insert(0, str(REPO / "tests"))
+    from test_type_curves import TOLERANCE
+
+    return float(TOLERANCE)
+
+
 def page() -> str:
     lines = [
         "# Validation",
@@ -163,12 +171,17 @@ def page() -> str:
         "",
         "![Published against pumptest parameters](assets/parity.png)",
         "",
-        "## Against the published type-curve tables",
+        "## Well functions against independent evaluations",
         "",
-        "Theis is checked against the exponential integral summed from its power",
-        "series in 60-digit decimal arithmetic, and Hantush, Neuman and",
-        "Papadopulos-Cooper against Kruseman and de Ridder (1994), Annexes 4.2, 5.1",
-        "and 15.1, within the tables' three-figure rounding.",
+        "The leaky, large-diameter and unconfined solutions are computed in the",
+        "Laplace domain and inverted numerically. Each is compared with the same",
+        "published solution evaluated another way: the Hantush integral by direct",
+        "quadrature, and the real-time integrals of Papadopulos and Cooper (1967)",
+        "and Neuman (1975) by `scripts/reference_values.py`. Every value agrees",
+        f"within a relative {_well_function_tolerance():.0e}, the tolerance of the test. Theis",
+        "is checked against the exponential integral summed from its power series",
+        "in 60-digit decimal arithmetic. Neuman's solution also reduces to Theis",
+        "with S when Sy is zero and with S + Sy at late time.",
         "See `tests/test_type_curves.py`.",
         "",
     ]

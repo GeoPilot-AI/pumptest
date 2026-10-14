@@ -40,10 +40,15 @@ columns 'raw' fit every reading. RMSE is on the raw records, in metres.
 
 ![Published against pumptest parameters](assets/parity.png)
 
-## Against the published type-curve tables
+## Well functions against independent evaluations
 
-Theis is checked against the exponential integral summed from its power
-series in 60-digit decimal arithmetic, and Hantush, Neuman and
-Papadopulos-Cooper against Kruseman and de Ridder (1994), Annexes 4.2, 5.1
-and 15.1, within the tables' three-figure rounding.
+The leaky, large-diameter and unconfined solutions are computed in the
+Laplace domain and inverted numerically. Each is compared with the same
+published solution evaluated another way: the Hantush integral by direct
+quadrature, and the real-time integrals of Papadopulos and Cooper (1967)
+and Neuman (1975) by `scripts/reference_values.py`. Every value agrees
+within a relative 1e-04, the tolerance of the test. Theis
+is checked against the exponential integral summed from its power series
+in 60-digit decimal arithmetic. Neuman's solution also reduces to Theis
+with S when Sy is zero and with S + Sy at late time.
 See `tests/test_type_curves.py`.
