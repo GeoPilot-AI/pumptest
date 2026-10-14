@@ -12,8 +12,8 @@ It needs Python 3.11 or later, numpy and scipy.
 
 ## Units: one consistent set
 
-The solvers never convert units. Give lengths, times and rates in one
-consistent set and the results come back in it. Metres, days and cubic metres
+The solvers work in the units they are given, so lengths, times and rates
+must use one consistent set, and the results come back in it. Metres, days and cubic metres
 per day is the usual choice, and gives transmissivity in square metres per
 day. Convert field units first with `pumptest.units`:
 

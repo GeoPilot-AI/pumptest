@@ -46,8 +46,8 @@ print(fit(test, Theis()).summary())
 
 ## A rate that changed
 
-Flow meters drift and pumps get throttled. Enter each change as a step: the
-solution superposes them.
+If the pumping rate changed during the test, enter each change as a step in
+the schedule and the solution superposes them.
 
 ```python
 schedule = Schedule(((0.0, 864.0), (0.05, 820.0), (0.2, 790.0)))

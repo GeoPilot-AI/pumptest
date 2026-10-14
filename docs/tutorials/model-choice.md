@@ -43,9 +43,9 @@ that adds parameters has to lower the residual enough to pay for them; AICc
 makes that trade explicit.
 
 !!! warning "AICc ranks models, it does not validate them"
-    The best model in the list can still be wrong. If none of the candidates
-    follows the derivative, the aquifer has a feature none of them describes
-    (a boundary, partial penetration, double porosity). Look at the residuals.
+    The best model in the list can still be wrong. If no candidate follows
+    the derivative, the aquifer may have a feature that the candidates do not
+    describe, such as a boundary, partial penetration or double porosity. Look at the residuals.
 
 ## Leaky aquifer: Texas Hill
 

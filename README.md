@@ -45,9 +45,9 @@ for r in compare(datasets.load("texas_hill"), [Theis(), HantushJacob(), Neuman()
     print(f"{r.model:15} AICc {r.aicc:8.1f}  RMSE {r.rmse:.4f} m")
 ```
 
-Units are never converted inside the solvers: give one consistent set (metres,
-days and cubic metres per day in the bundled data) and the results come back
-in it. `pumptest.units` converts field units first.
+The solvers work in the units they are given, so inputs must use one
+consistent set (metres, days and cubic metres per day in the bundled data) and
+the results come back in it. `pumptest.units` converts field units first.
 
 ## Validation
 
