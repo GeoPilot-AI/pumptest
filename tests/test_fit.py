@@ -121,6 +121,27 @@ def test_papadopulos_cooper_with_skin() -> None:
     assert result.values["T"] == pytest.approx(120.0, rel=1e-3)
 
 
+def test_papadopulos_cooper_recovers_the_effective_casing_radius() -> None:
+    # A pumped well with skin, observed only in the well, S held at its true
+    # value because a single well cannot separate it from the skin.
+    truth = {"T": 1800.0, "S": 4e-4, "Sk": 25.0, "rc": 0.09}
+    second = 1.0 / 86400.0
+    model = PapadopulosCooper(skin=True, casing_radius=True)
+    test = synthetic(
+        model,
+        truth,
+        distances=(0.0,),
+        well=Well(0.185),
+        schedule=Schedule.constant(690.0),
+        thickness=None,
+        times=np.geomspace(5 * second, 750 * second, 25),
+    )
+    result = fit(test, model, fixed={"S": 4e-4})
+    assert result.values["rc"] == pytest.approx(0.09, rel=1e-3)
+    assert result.values["T"] == pytest.approx(1800.0, rel=1e-3)
+    assert result.values["Sk"] == pytest.approx(25.0, rel=1e-3)
+
+
 def test_recovery_is_fitted_through_the_schedule() -> None:
     truth = {"T": 250.0, "S": 2e-4}
     schedule = Schedule.constant(500.0, stop=0.5)
