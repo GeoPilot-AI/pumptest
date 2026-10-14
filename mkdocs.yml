@@ -1,0 +1,7 @@
+site_name: pumptest
+site_description: Pumping test analysis in Python
+nav:
+  - Home: index.md
+  - Solutions: solutions.md
+  - Validation: validation.md
+  - Decisions: decisions.md
