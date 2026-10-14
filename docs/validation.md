@@ -23,3 +23,19 @@ The well functions are also checked against published tables: Theis
 against Abramowitz and Stegun (Table 5.1), and Hantush, Neuman and
 Papadopulos-Cooper against Kruseman and de Ridder (1994), Annexes 4.2, 5.1
 and 15.1. See `tests/test_type_curves.py`.
+
+## Worked examples from Kruseman and de Ridder (1994)
+
+Their answers come from lines and type curves fitted by eye, so they are
+compared within what a graph resolves. Data transcribed in `tests/data/kdr`.
+
+| Example | Quantity | Published | Here | Notes |
+|---|---|---|---|---|
+| Well 1 step test | B (d/m2) | 0.00326 | 0.00321 | drawdown RMSE 0.1053 m published, 0.09603 m here |
+| Well 1 step test | C (d2/m5) | 1.45e-07 | 1.561e-07 | same fit |
+| Hoogezand single well | T, Jacob (m2/d) | 1800 | 1928 | slope 0.07 m/cycle read by eye, 0.06547 by regression |
+| Hoogezand single well | T with skin, S = 4e-4 (m2/d) | not published | 1928 | skin 27.44, RMSE 0.004026 m |
+| Vennebulten unconfined | T, Neuman (m2/d) | 1447 to 1616 | 1335 | RMSE 0.003035 m; Theis 0.01008, Hantush 0.005672 |
+| Vennebulten unconfined | S | 5.2e-4 | 0.0005613 | |
+| Vennebulten unconfined | Sy | 4.9e-3 (the book: unreasonably low) | 0.01158 | |
+| Vennebulten unconfined | Kd = Kz/Kr | 0.0005444 | 0.0007007 | |

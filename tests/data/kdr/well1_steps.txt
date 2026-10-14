@@ -1,0 +1,9 @@
+# Step-drawdown test "Well 1" (Clark 1977), Kruseman and de Ridder (1994) Table 14.2.
+# Cumulative drawdown in the pumped well 100 min into each step.
+# rate (m3/d), drawdown (m)
+1306 4.25
+1693 5.95
+2423 8.75
+3261 12.15
+4094 15.80
+5019 20.00

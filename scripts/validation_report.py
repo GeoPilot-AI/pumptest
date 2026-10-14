@@ -23,15 +23,21 @@ sys.path.insert(0, str(REPO / "src"))
 from pumptest import (  # noqa: E402
     HantushJacob,
     Model,
+    Neuman,
     Observation,
+    PapadopulosCooper,
     PumpingTest,
     Schedule,
     Theis,
     Well,
+    cooper_jacob,
     fit,
+    step_drawdown,
 )
 
 DATA = REPO / "tests" / "data" / "ttim"
+KDR = REPO / "tests" / "data" / "kdr"
+DAY_S = 86400.0
 PAGE = REPO / "docs" / "validation.md"
 FT = 0.3048
 
@@ -149,6 +155,70 @@ def _c(values: dict[str, float]) -> str:
     return _fmt(values["B"] ** 2 / values["T"]) if "B" in values else ""
 
 
+def textbook_rows() -> list[str]:
+    """The Kruseman and de Ridder worked examples, one row per published quantity."""
+
+    rows: list[str] = []
+    steps = np.loadtxt(KDR / "well1_steps.txt", comments="#")
+    q, s = steps[:, 0], steps[:, 1]
+    st = step_drawdown(q, s)
+    b, c = st.aquifer_loss_coefficient, st.well_loss_coefficient
+
+    def miss(bb: float, cc: float) -> float:
+        return float(np.sqrt(np.mean((s - (bb * q + cc * q * q)) ** 2)))
+
+    rows.append(
+        f"| Well 1 step test | B (d/m2) | {_fmt(3.26e-3)} | {_fmt(b)} "
+        f"| drawdown RMSE {_fmt(miss(3.26e-3, 1.45e-7))} m published, {_fmt(miss(b, c))} m here |"
+    )
+    rows.append(f"| Well 1 step test | C (d2/m5) | {_fmt(1.45e-7)} | {_fmt(c)} | same fit |")
+
+    raw = np.loadtxt(KDR / "hoogezand.txt", comments="#")
+    t, sw, rate = raw[:, 0] / DAY_S, raw[:, 1], 28.7 * 24.0
+    jacob = cooper_jacob(t, sw, rate, 0.185, start=41.0 / DAY_S)
+    rows.append(
+        f"| Hoogezand single well | T, Jacob (m2/d) | 1800 | {_fmt(jacob.transmissivity)} "
+        f"| slope {_fmt(0.07)} m/cycle read by eye, {_fmt(jacob.line.slope)} by regression |"
+    )
+    late = t >= 45.0 / DAY_S
+    hz = PumpingTest(
+        Well(0.185, casing_radius=1e-3),
+        Schedule.constant(rate),
+        [Observation("pumped well", 0.0, t[late], sw[late])],
+    )
+    skin = fit(hz, PapadopulosCooper(skin=True), fixed={"S": 4e-4})
+    rows.append(
+        f"| Hoogezand single well | T with skin, S = 4e-4 (m2/d) | not published "
+        f"| {_fmt(skin.values['T'])} | skin {_fmt(skin.values['Sk'])}, "
+        f"RMSE {_fmt(skin.rmse)} m |"
+    )
+
+    vb = np.loadtxt(DATA / "venne_deep.txt", comments="#")
+    vb = vb[vb[:, 0] > 0]
+    venne = PumpingTest(
+        Well(0.2),
+        Schedule.constant(873.0),
+        [Observation("deep", 90.0, vb[:, 0] / 1440.0, np.abs(vb[:, 1]))],
+        thickness=21.0,
+    )
+    nm = fit(venne, Neuman())
+    th, hj = fit(venne, Theis()), fit(venne, HantushJacob())
+    rows.append(
+        f"| Vennebulten unconfined | T, Neuman (m2/d) | 1447 to 1616 | {_fmt(nm.values['T'])} "
+        f"| RMSE {_fmt(nm.rmse)} m; Theis {_fmt(th.rmse)}, Hantush {_fmt(hj.rmse)} |"
+    )
+    rows.append(f"| Vennebulten unconfined | S | 5.2e-4 | {_fmt(nm.values['S'])} | |")
+    rows.append(
+        f"| Vennebulten unconfined | Sy | 4.9e-3 (the book: unreasonably low) "
+        f"| {_fmt(nm.values['Sy'])} | |"
+    )
+    kd_pub = 0.01 * 21.0**2 / 90.0**2
+    rows.append(
+        f"| Vennebulten unconfined | Kd = Kz/Kr | {_fmt(kd_pub)} | {_fmt(nm.values['Kd'])} | |"
+    )
+    return rows
+
+
 def page() -> str:
     rows = []
     for case in cases():
@@ -185,6 +255,15 @@ def page() -> str:
         "against Abramowitz and Stegun (Table 5.1), and Hantush, Neuman and",
         "Papadopulos-Cooper against Kruseman and de Ridder (1994), Annexes 4.2, 5.1",
         "and 15.1. See `tests/test_type_curves.py`.",
+        "",
+        "## Worked examples from Kruseman and de Ridder (1994)",
+        "",
+        "Their answers come from lines and type curves fitted by eye, so they are",
+        "compared within what a graph resolves. Data transcribed in `tests/data/kdr`.",
+        "",
+        "| Example | Quantity | Published | Here | Notes |",
+        "|---|---|---|---|---|",
+        *textbook_rows(),
         "",
     ]
     return "\n".join([*header, *rows, *footer])

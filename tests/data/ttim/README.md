@@ -33,6 +33,7 @@ TTim is released under the MIT licence:
 | `sioux100.txt`, `200`, `400` | Sioux Flats, South Dakota | AQTESOLV manual (Duffield, 2007) |
 | `texas40.txt`, `80`, `160` | Texas Hill, leaky | AQTESOLV manual (Duffield, 2007) |
 | `dalem_p30.txt` to `p120` | Dalem, leaky | Kruseman and de Ridder (1970) |
+| `venne_deep.txt` | Vennebulten, unconfined, deep piezometer at 90 m | Kruseman and de Ridder (1970); time in minutes |
 
 The AQTESOLV, MLU and Kruseman and de Ridder parameter values the tests compare
 against are those tabulated in the TTim notebooks, which take them from
