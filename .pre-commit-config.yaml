@@ -1,0 +1,76 @@
+# Quality gates that run before a commit is made, so a problem is caught at the
+# keyboard rather than in review or, worse, in a deliverable.
+#
+# These hooks are the portable half of the engineering foundation. They run
+# identically on a laptop, in our continuous integration, and in IWMI's, which
+# matters because Section 7 of the terms of reference requires us to adopt
+# IWMI's DevOps rather than run a toolchain alongside it. When we move into
+# IWMI's pipeline, the runner changes and these checks do not.
+#
+# Install once per clone:   pre-commit install
+# Run across everything:    pre-commit run --all-files
+
+default_language_version:
+  python: python3.12
+
+repos:
+  # -- correctness and formatting -----------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # -- the ordinary hygiene that is embarrassing to get wrong --------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-yaml
+        # mkdocs.yml carries a !!python/name: tag, which is how Material
+        # registers the mermaid fence handler. It is valid MkDocs and not
+        # valid plain YAML, so this one file is excluded rather than the
+        # check weakened with --unsafe for every YAML in the repository.
+        exclude: ^mkdocs\.yml$
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      # Secrets. The first two are cheap and catch the common accidents.
+      - id: detect-private-key
+      - id: check-added-large-files
+        name: block committed .env files
+        args: [--maxkb=0]
+        files: ^\.env$
+      # Nothing is committed straight to the trunk. A branch and a review, always.
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, master]
+
+  # -- secret scanning, the thorough pass ---------------------------------
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  # -- project rules, enforced rather than remembered ---------------------
+  - repo: local
+    hooks:
+      - id: house-style
+        name: house style (no em-dashes or en-dashes in prose)
+        entry: python scripts/check_house_style.py
+        language: system
+        types_or: [python, markdown, yaml]
+        pass_filenames: true
+
+      - id: dependency-licences
+        name: dependency licences (no copyleft in a deliverable IWMI owns)
+        entry: python scripts/check_licences.py
+        language: system
+        files: ^pyproject\.toml$
+        pass_filenames: false

@@ -1,0 +1,90 @@
+# pumptest
+
+[![CI](https://github.com/GeoPilot-AI/pumptest/actions/workflows/ci.yml/badge.svg)](https://github.com/GeoPilot-AI/pumptest/actions/workflows/ci.yml)
+[![Docs](https://github.com/GeoPilot-AI/pumptest/actions/workflows/docs.yml/badge.svg)](https://geopilot-ai.github.io/pumptest/)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
+**Pumping test analysis in Python.** Transmissivity, storativity, leakage,
+specific yield, skin and well losses from drawdown data, by the classic
+analytical solutions, with automatic fitting across any number of wells.
+Validated against AQTESOLV and the textbook analyses of published tests.
+
+![Measured drawdown and fitted solutions for published tests](docs/assets/fits.png)
+
+- **Solutions:** Theis, Hantush-Jacob (leaky), Papadopulos-Cooper
+  (large-diameter wells, with optional skin and fitted casing radius), Neuman
+  (unconfined, delayed yield).
+- **Straight-line methods:** Cooper-Jacob, Theis recovery, step-drawdown well losses.
+- **Tests:** constant rate, recovery and any variable-rate schedule, by superposition.
+- **Fitting:** least squares over every observation at once, with standard
+  errors, correlations, RMSE and AICc for choosing between models.
+- **Diagnostics:** the Bourdet log-derivative.
+- **Example data:** seven published tests in `pumptest.datasets`, with their
+  published answers.
+- **Dependencies:** numpy and scipy only.
+
+## Install
+
+The package is not on PyPI yet. Install it from GitHub:
+
+```
+pip install git+https://github.com/GeoPilot-AI/pumptest
+```
+
+## Example
+
+```python
+from pumptest import HantushJacob, Neuman, Theis, compare, datasets, fit
+
+test = datasets.load("sioux_flats")  # three observation wells, from the AQTESOLV manual
+result = fit(test, Theis())
+print(result.summary())
+
+# Which model does a leaky test call for?
+for r in compare(datasets.load("texas_hill"), [Theis(), HantushJacob(), Neuman()]):
+    print(f"{r.model:15} AICc {r.aicc:8.1f}  RMSE {r.rmse:.4f} m")
+```
+
+The solvers work in the units they are given, so inputs must use one
+consistent set (metres, days and cubic metres per day in the bundled data) and
+the results come back in it. `pumptest.units` converts field units first.
+
+## Validation
+
+| Test | Model | T published (m²/d) | T pumptest | Published by |
+|---|---|---|---|---|
+| Sioux Flats | Theis | 4308 | 4310 | AQTESOLV |
+| Gridley | Theis | 207.3 | 208.7 | AQTESOLV |
+| Texas Hill | Hantush-Jacob | 3425 | 3424 | AQTESOLV |
+| Lauswiesen B2 to B5 (four tests) | Theis | 869 to 2162 | identical | welltestpy |
+
+The AQTESOLV values are those reported by Yang (2020). welltestpy fits a
+smoothed record sampled at ten times per well; given those same points
+pumptest returns its estimates to five figures, and on the raw records its
+transmissivities are within 3.5 percent of them. On every test the pumptest
+fit is at least as close to the data as the published parameters. The full
+page, regenerated from the code and checked by a test, is
+[docs/validation.md](docs/validation.md).
+
+## Documentation
+
+<https://geopilot-ai.github.io/pumptest/>: getting started, tutorials,
+theory, validation and the API reference.
+
+## Development
+
+```
+pip install -e ".[dev,docs]"
+python scripts/checks.py
+```
+
+Design decisions are recorded in [pm/decisions](pm/decisions/README.md);
+see [Contributing](docs/contributing.md).
+
+## Licence
+
+MIT. Copyright 2026 Piezoline Technologies Private Limited.
+
+The bundled test data keep their own licences, listed in
+[`src/pumptest/datasets/data/README.md`](src/pumptest/datasets/data/README.md).
+The Lauswiesen records are CC BY-SA 4.0.

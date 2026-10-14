@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  gates:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,docs]"
+      # One call. The gates live in the repository, not in this file, so moving
+      # to a client's pipeline means writing one line rather than porting five
+      # checks. It also means a local run and a CI run cannot disagree.
+      - run: python scripts/checks.py
