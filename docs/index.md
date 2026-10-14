@@ -4,7 +4,7 @@
 specific yield, skin and well losses from drawdown data, by the classic
 analytical solutions, with automatic fitting across any number of wells.
 
-![Measured drawdown and fitted solutions for six published tests](assets/fits.png)
+![Measured drawdown and fitted solutions for published tests](assets/fits.png)
 
 ## What it does
 
@@ -15,14 +15,15 @@ analytical solutions, with automatic fitting across any number of wells.
 | **Test types** | constant rate, recovery, and any variable-rate schedule, by superposition |
 | **Fitting** | least squares over every observation at once, with standard errors, correlations, RMSE and AICc for choosing between models |
 | **Diagnostics** | the Bourdet log-derivative |
-| **Example data** | seven published tests bundled in `pumptest.datasets`, with their published answers |
+| **Example data** | seven published tests bundled in `pumptest.datasets`, with the published estimates for each |
 | **Dependencies** | numpy and scipy only |
 
 ## How far to trust it
 
-On five published tests the fitted parameters match AQTESOLV or the textbook
-analysis, and on the same data the fit is at least as good as the published
-one. The well functions match the published type-curve tables. Every number on
+On three tests from the AQTESOLV manual and four open pumping tests analysed
+with welltestpy, the fitted parameters match the published ones, and on the
+same data the fit is at least as good. The well functions are checked
+against independent evaluations and published tables. Every number on
 the [validation](validation.md) page is regenerated from the code, and a test
 fails if the page and the code disagree.
 
@@ -33,7 +34,7 @@ fails if the page and the code disagree.
 ```python
 from pumptest import Theis, datasets, fit
 
-test = datasets.load("oude_korendijk")  # Kruseman and de Ridder's confined test
+test = datasets.load("sioux_flats")  # three observation wells, from the AQTESOLV manual
 result = fit(test, Theis())
 print(result.summary())
 ```
@@ -43,5 +44,5 @@ Next: [Getting started](getting-started.md).
 ## Licence
 
 MIT. Copyright 2026 Piezoline Technologies Private Limited. The bundled
-example data come from the TTim documentation (MIT) and from Kruseman and
-de Ridder (1994); see [Citing](citing.md).
+example data come from the TTim documentation (MIT) and from the Lauswiesen
+research site (CC BY-SA 4.0); see [Citing](citing.md).

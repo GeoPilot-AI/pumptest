@@ -152,7 +152,7 @@ def starting_points(test: PumpingTest, model: Model) -> list[dict[str, float]]:
         "T": [trans],
         "S": [stor],
         "B": [10.0 * reach, 100.0 * reach, 1000.0 * reach],
-        # Single-well tests routinely carry skins of 20 to 30 (Hoogezand: 27).
+        # No skin, moderate and heavy damage; skins of tens occur in damaged wells.
         "Sk": [0.0, 5.0, 25.0],
         "rc": [test.well.storage_radius],
     }

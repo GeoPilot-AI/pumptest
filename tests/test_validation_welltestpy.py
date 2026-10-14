@@ -5,53 +5,22 @@ welltestpy does not fit the raw records: it normalises the rate, smooths each
 record with a low-pass filter and keeps ten times per well, spaced
 quadratically from 10 s. Given those same points, pumptest must return their
 estimates; given the raw records, it must fit at least as well as their
-parameters do.
+parameters do. The preprocessing lives in the validation report, so the page
+and this test use one copy of it.
 """
 
 from __future__ import annotations
 
-import gzip
-import math
-from importlib import resources
+import sys
+from pathlib import Path
 
 import numpy as np
 import pytest
-from scipy import signal
 
-from pumptest import Observation, PumpingTest, Schedule, Theis, datasets, fit
-from pumptest._types import FloatArray
+from pumptest import PumpingTest, Theis, datasets, fit
 
-TESTS = ("lauswiesen_b2", "lauswiesen_b3", "lauswiesen_b4", "lauswiesen_b5")
-SECOND = 1.0 / 86400.0
-
-
-def _raw(name: str) -> FloatArray:
-    path = resources.files("pumptest.datasets").joinpath("data", f"{name}.txt.gz")
-    with path.open("rb") as fh, gzip.open(fh, "rt") as text:
-        table: FloatArray = np.loadtxt(text)
-    return table
-
-
-def _smooth(time: FloatArray, head: FloatArray, tout: FloatArray) -> FloatArray:
-    # welltestpy.process.filterdrawdown with its defaults (dxscale 2).
-    n = 2 * int((time[-1] - time[0]) / max(float(np.diff(time).min()), 1.0))
-    grid = np.linspace(time[0], time[-1], n)
-    b, a = signal.butter(1, 0.025)
-    filtered = signal.filtfilt(b, a, np.interp(grid, time, head), padlen=150)
-    return np.asarray(np.interp(tout, grid, filtered))
-
-
-def _as_welltestpy_sees_it(name: str) -> PumpingTest:
-    test = datasets.load(name)
-    raw = _raw(name.replace("lauswiesen_b", "lauswiesen_B"))
-    rate = test.schedule.first_rate * SECOND
-    tmin = max(10.0, float(raw[0, 0]))
-    tout = np.linspace(math.sqrt(tmin), math.sqrt(float(raw[-1, 0])), 10) ** 2
-    obs = [
-        Observation(o.name, o.distance, tout * SECOND, _smooth(raw[:, 0], raw[:, i] / rate, tout))
-        for i, o in enumerate(test.observations, start=1)
-    ]
-    return PumpingTest(test.well, Schedule.constant(86400.0), obs, test.thickness)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from validation_report import WELLTESTPY, as_welltestpy_sees_it
 
 
 def _rmse(test: PumpingTest, values: dict[str, float]) -> float:
@@ -60,15 +29,15 @@ def _rmse(test: PumpingTest, values: dict[str, float]) -> float:
     return float(np.sqrt(np.mean(res**2)))
 
 
-@pytest.mark.parametrize("name", TESTS)
+@pytest.mark.parametrize("name", WELLTESTPY)
 def test_reproduces_welltestpy_on_its_own_points(name: str) -> None:
     published = datasets.published(name).values
-    result = fit(_as_welltestpy_sees_it(name), Theis())
+    result = fit(as_welltestpy_sees_it(name), Theis())
     assert result.values["T"] == pytest.approx(published["T"], rel=1e-3)
     assert result.values["S"] == pytest.approx(published["S"], rel=5e-3)
 
 
-@pytest.mark.parametrize("name", TESTS)
+@pytest.mark.parametrize("name", WELLTESTPY)
 def test_raw_records_fit_at_least_as_well(name: str) -> None:
     test, published = datasets.load(name), datasets.published(name).values
     result = fit(test, Theis())

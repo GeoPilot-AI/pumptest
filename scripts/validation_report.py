@@ -10,10 +10,14 @@ disagree, so the documentation cannot drift from the code.
 from __future__ import annotations
 
 import argparse
+import gzip
+import math
 import sys
+from importlib import resources
 from pathlib import Path
 
 import numpy as np
+from scipy import signal
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
@@ -21,24 +25,21 @@ sys.path.insert(0, str(REPO / "src"))
 from pumptest import (  # noqa: E402
     MODELS,
     Model,
-    Neuman,
     Observation,
-    PapadopulosCooper,
     PumpingTest,
+    Schedule,
     Theis,
-    Well,
-    cooper_jacob,
     datasets,
     fit,
-    step_drawdown,
 )
-from pumptest.models import HantushJacob  # noqa: E402
+from pumptest._types import FloatArray  # noqa: E402
 
 PAGE = REPO / "docs" / "validation.md"
 SECOND = 1.0 / 86400.0
-FITTED = ("oude_korendijk", "gridley", "sioux_flats", "texas_hill", "dalem")
-"""The tests whose published parameters come from a least-squares program
-or a full type-curve analysis of every well, so a parameter comparison is fair."""
+FITTED = ("gridley", "sioux_flats", "texas_hill")
+"""Tests from the AQTESOLV manual, with the AQTESOLV parameters reported by Yang (2020)."""
+WELLTESTPY = ("lauswiesen_b2", "lauswiesen_b3", "lauswiesen_b4", "lauswiesen_b5")
+"""Open Lauswiesen tests, with the welltestpy estimates of Mueller et al. (2022)."""
 
 
 def model_for(name: str) -> Model:
@@ -59,6 +60,37 @@ def _c(values: dict[str, float]) -> str:
     return _fmt(values["B"] ** 2 / values["T"]) if "B" in values else ""
 
 
+def _smooth(time: FloatArray, head: FloatArray, tout: FloatArray) -> FloatArray:
+    # welltestpy.process.filterdrawdown with its defaults (dxscale 2).
+    n = 2 * int((time[-1] - time[0]) / max(float(np.diff(time).min()), 1.0))
+    grid = np.linspace(time[0], time[-1], n)
+    b, a = signal.butter(1, 0.025)
+    filtered = signal.filtfilt(b, a, np.interp(grid, time, head), padlen=150)
+    return np.asarray(np.interp(tout, grid, filtered))
+
+
+def as_welltestpy_sees_it(name: str) -> PumpingTest:
+    """A Lauswiesen test after welltestpy's preprocessing (``generate=True``).
+
+    The rate is normalised to 1 m3/s, each record is low-pass filtered, and
+    ten times are kept per well, spaced quadratically from 10 s to the end.
+    """
+
+    test = datasets.load(name)
+    file = f"lauswiesen_{name[-2:].upper()}.txt.gz"
+    data = resources.files("pumptest.datasets").joinpath("data", file)
+    with data.open("rb") as fh, gzip.open(fh, "rt") as text:
+        raw: FloatArray = np.loadtxt(text)
+    rate = test.schedule.first_rate * SECOND
+    start, end = math.sqrt(max(10.0, float(raw[0, 0]))), math.sqrt(float(raw[-1, 0]))
+    tout = np.linspace(start, end, 10) ** 2
+    obs = [
+        Observation(o.name, o.distance, tout * SECOND, _smooth(raw[:, 0], raw[:, i] / rate, tout))
+        for i, o in enumerate(test.observations, start=1)
+    ]
+    return PumpingTest(test.well, Schedule.constant(86400.0), obs, test.thickness, test.name)
+
+
 def published_rows() -> list[str]:
     rows = []
     for name in FITTED:
@@ -67,7 +99,7 @@ def published_rows() -> list[str]:
         ours = fit(test, model).values
         p = pub.values
         rows.append(
-            f"| {test.name} | {model.name} | {pub.source.split(' (')[0]} "
+            f"| {test.name} | {model.name} "
             f"| {_fmt(p['T'])} | {_fmt(ours['T'])} "
             f"| {_fmt(p['S'])} | {_fmt(ours['S'])} "
             f"| {_c(p)} | {_c(ours)} "
@@ -76,78 +108,17 @@ def published_rows() -> list[str]:
     return rows
 
 
-def _from(test: PumpingTest, seconds: float, well: Well | None = None) -> PumpingTest:
-    obs = test.observations[0]
-    # Times are whole seconds stored in days; cutting half a second early keeps
-    # the point at the cut whichever way its conversion rounded.
-    keep = obs.time >= (seconds - 0.5) * SECOND
-    return PumpingTest(
-        well or test.well,
-        test.schedule,
-        [Observation(obs.name, 0.0, obs.time[keep], obs.drawdown[keep])],
-    )
-
-
-def textbook_rows() -> list[str]:
-    """The Kruseman and de Ridder worked examples, one row per published quantity."""
-
-    rows: list[str] = []
-    q, s = datasets.step_test()
-    st = step_drawdown(q, s)
-
-    def miss(curve: np.ndarray) -> float:
-        return float(np.sqrt(np.mean((s - curve) ** 2)))
-
-    book = miss(3.26e-3 * q + 1.45e-7 * q * q)
-    rows.append(
-        f"| Well 1 step test | B (d/m2) | {_fmt(3.26e-3)} | {_fmt(st.aquifer_loss_coefficient)} "
-        f"| drawdown RMSE {_fmt(book)} m published, {_fmt(miss(st.drawdown_curve(q)))} m here |"
-    )
-    rows.append(
-        f"| Well 1 step test | C (d2/m5) | {_fmt(1.45e-7)} "
-        f"| {_fmt(st.well_loss_coefficient)} | same fit |"
-    )
-
-    hz = datasets.load("hoogezand")
-    obs, rate = hz.observations[0], hz.schedule.first_rate
-    jacob = cooper_jacob(obs.time, obs.drawdown, rate, 0.185, start=41.0 * SECOND)
-    rows.append(
-        f"| Hoogezand single well | T, Jacob (m2/d) | 1800 | {_fmt(jacob.transmissivity)} "
-        f"| slope 0.07 m/cycle read by eye, {_fmt(jacob.line.slope)} by regression |"
-    )
-    skin = fit(
-        _from(hz, 45.0, Well(0.185, casing_radius=1e-3)),
-        PapadopulosCooper(skin=True),
-        fixed={"S": 4e-4},
-    )
-    rows.append(
-        f"| Hoogezand single well | T with skin, S = 4e-4 (m2/d) | not published "
-        f"| {_fmt(skin.values['T'])} | skin {_fmt(skin.values['Sk'])}, "
-        f"RMSE {_fmt(skin.rmse)} m |"
-    )
-    rcfit = fit(_from(hz, 5.0), PapadopulosCooper(skin=True, casing_radius=True), fixed={"S": 4e-4})
-    rows.append(
-        f"| Hoogezand single well | T, full record, fitted rc (m2/d) | 1800 "
-        f"| {_fmt(rcfit.values['T'])} | rc {_fmt(rcfit.values['rc'])} m of 0.185, skin "
-        f"{_fmt(rcfit.values['Sk'])}, RMSE {_fmt(rcfit.rmse)} m |"
-    )
-
-    venne = datasets.load("vennebulten")
-    vpub = datasets.published("vennebulten").values
-    nm = fit(venne, Neuman())
-    th, hj = fit(venne, Theis()), fit(venne, HantushJacob())
-    rows.append(
-        f"| Vennebulten unconfined | T, Neuman (m2/d) | 1447 to 1616 | {_fmt(nm.values['T'])} "
-        f"| RMSE {_fmt(nm.rmse)} m; Theis {_fmt(th.rmse)}, Hantush {_fmt(hj.rmse)} |"
-    )
-    rows.append(f"| Vennebulten unconfined | S | {_fmt(vpub['S'])} | {_fmt(nm.values['S'])} | |")
-    rows.append(
-        f"| Vennebulten unconfined | Sy | {_fmt(vpub['Sy'])} (the book: unreasonably low) "
-        f"| {_fmt(nm.values['Sy'])} | |"
-    )
-    rows.append(
-        f"| Vennebulten unconfined | Kd = Kz/Kr | {_fmt(vpub['Kd'])} | {_fmt(nm.values['Kd'])} | |"
-    )
+def welltestpy_rows() -> list[str]:
+    rows = []
+    for name in WELLTESTPY:
+        test, p = datasets.load(name), datasets.published(name).values
+        same = fit(as_welltestpy_sees_it(name), Theis()).values
+        raw = fit(test, Theis()).values
+        rows.append(
+            f"| {test.name} | {_fmt(p['T'])} | {_fmt(same['T'])} | {_fmt(raw['T'])} "
+            f"| {_fmt(p['S'])} | {_fmt(same['S'])} | {_fmt(raw['S'])} "
+            f"| {_fmt(_rmse(test, Theis(), p))} | {_fmt(_rmse(test, Theis(), raw))} |"
+        )
     return rows
 
 
@@ -160,23 +131,37 @@ def page() -> str:
         "",
         "![Measured drawdown and fitted solutions](assets/fits.png)",
         "",
-        "## Against AQTESOLV and published analyses",
+        "## Against AQTESOLV",
         "",
-        "Each published test is fitted here and compared with the parameters",
-        "AQTESOLV or Kruseman and de Ridder published for it. T is in square metres",
-        "per day, c (aquitard resistance) in days. Both RMSE columns are computed",
-        "here, on the same data, in metres: the published parameters' fit and ours.",
+        "Three tests from the AQTESOLV manual (Duffield, 2007), fitted here and",
+        "compared with the AQTESOLV parameters reported by Yang (2020). T is in",
+        "square metres per day, c (aquitard resistance) in days. Both RMSE columns",
+        "are computed here, on the same data, in metres: the published parameters'",
+        "fit and ours.",
         "",
-        "| Test | Model | Published by | T published | T here | S published | S here "
+        "| Test | Model | T published | T here | S published | S here "
         "| c published | c here | RMSE published | RMSE here |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|---|",
         *published_rows(),
-        "",
-        "![Published against pumptest parameters](assets/parity.png)",
         "",
         "Data: the TTim documentation (MIT); published values: Yang (2020), as",
         "tabulated in the TTim notebooks. Provenance is in",
         "`src/pumptest/datasets/data/README.md`.",
+        "",
+        "## Against welltestpy",
+        "",
+        "Four open pumping tests at the Lauswiesen research site (Leven, 2020),",
+        "compared with the Theis estimates that Mueller et al. (2022) obtained",
+        "with welltestpy. welltestpy fits a smoothed record sampled at ten times",
+        "per well; the columns 'their points' fit exactly those points, the",
+        "columns 'raw' fit every reading. RMSE is on the raw records, in metres.",
+        "",
+        "| Test | T welltestpy | T their points | T raw | S welltestpy "
+        "| S their points | S raw | RMSE welltestpy | RMSE raw |",
+        "|---|---|---|---|---|---|---|---|---|",
+        *welltestpy_rows(),
+        "",
+        "![Published against pumptest parameters](assets/parity.png)",
         "",
         "## Against the published type-curve tables",
         "",
@@ -185,17 +170,6 @@ def page() -> str:
         "Papadopulos-Cooper against Kruseman and de Ridder (1994), Annexes 4.2, 5.1",
         "and 15.1, within the tables' three-figure rounding.",
         "See `tests/test_type_curves.py`.",
-        "",
-        "## Worked examples from Kruseman and de Ridder (1994)",
-        "",
-        "Their answers come from lines and type curves fitted by eye, so they are",
-        "compared within what a graph resolves.",
-        "",
-        "| Example | Quantity | Published | Here | Notes |",
-        "|---|---|---|---|---|",
-        *textbook_rows(),
-        "",
-        "![Single-well and step-drawdown tests](assets/single_well.png)",
         "",
     ]
     return "\n".join(lines)

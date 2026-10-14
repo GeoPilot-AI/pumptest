@@ -9,7 +9,7 @@ specific yield, skin and well losses from drawdown data, by the classic
 analytical solutions, with automatic fitting across any number of wells.
 Validated against AQTESOLV and the textbook analyses of published tests.
 
-![Measured drawdown and fitted solutions for six published tests](docs/assets/fits.png)
+![Measured drawdown and fitted solutions for published tests](docs/assets/fits.png)
 
 - **Solutions:** Theis, Hantush-Jacob (leaky), Papadopulos-Cooper
   (large-diameter wells, with optional skin and fitted casing radius), Neuman
@@ -36,7 +36,7 @@ pip install git+https://github.com/GeoPilot-AI/pumptest
 ```python
 from pumptest import HantushJacob, Neuman, Theis, compare, datasets, fit
 
-test = datasets.load("oude_korendijk")  # Kruseman and de Ridder's confined test
+test = datasets.load("sioux_flats")  # three observation wells, from the AQTESOLV manual
 result = fit(test, Theis())
 print(result.summary())
 
@@ -51,18 +51,19 @@ the results come back in it. `pumptest.units` converts field units first.
 
 ## Validation
 
-| Test | Model | T published (m²/d) | T pumptest | Source |
+| Test | Model | T published (m²/d) | T pumptest | Published by |
 |---|---|---|---|---|
-| Oude Korendijk | Theis | 462.6 | 462.6 | AQTESOLV |
 | Sioux Flats | Theis | 4308 | 4310 | AQTESOLV |
 | Gridley | Theis | 207.3 | 208.7 | AQTESOLV |
 | Texas Hill | Hantush-Jacob | 3425 | 3424 | AQTESOLV |
-| Dalem | Hantush-Jacob | 1677 | 1677 | Kruseman and de Ridder |
+| Lauswiesen B2 to B5 (four tests) | Theis | 869 to 2162 | identical | welltestpy |
 
-On every one the fit is at least as good as the published parameters on the
-same data. The well functions match the published type-curve tables, and the
-textbook's single-well, step-drawdown and unconfined examples are reproduced.
-The full page, regenerated from the code and checked by a test, is
+The AQTESOLV values are those reported by Yang (2020). welltestpy fits a
+smoothed record sampled at ten times per well; given those same points
+pumptest returns its estimates to five figures, and on the raw records its
+transmissivities are within 3.5 percent of them. On every test the pumptest
+fit is at least as close to the data as the published parameters. The full
+page, regenerated from the code and checked by a test, is
 [docs/validation.md](docs/validation.md).
 
 ## Documentation

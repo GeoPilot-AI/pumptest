@@ -1,6 +1,6 @@
 # Example datasets
 
-The `.txt` and `.dat` files below (all except `hoogezand.txt` and `well1_steps.txt`) are copied unchanged from the documentation of TTim,
+The Gridley, Sioux Flats and Texas Hill files are copied unchanged from the documentation of TTim,
 <https://github.com/mbakker7/ttim>, `docs/03pumpingtests/data/`.
 TTim is released under the MIT licence:
 
@@ -28,33 +28,14 @@ TTim is released under the MIT licence:
 
 | File | Test | Original source |
 |---|---|---|
-| `oudekorendijk_h30.dat`, `_h90.dat` | Oude Korendijk, confined | Kruseman and de Ridder (1970); time in minutes |
 | `gridley_well_1.txt`, `_well_3.txt` | Gridley, Illinois, confined | Walton (1962), via the AQTESOLV manual |
 | `sioux100.txt`, `200`, `400` | Sioux Flats, South Dakota | AQTESOLV manual (Duffield, 2007) |
 | `texas40.txt`, `80`, `160` | Texas Hill, leaky | AQTESOLV manual (Duffield, 2007) |
-| `dalem_p30.txt` to `p120` | Dalem, leaky | Kruseman and de Ridder (1970) |
-| `venne_deep.txt` | Vennebulten, unconfined, deep piezometer at 90 m | Kruseman and de Ridder (1970); time in minutes |
 
-The AQTESOLV, MLU and Kruseman and de Ridder parameter values the tests compare
-against are those tabulated in the TTim notebooks, which take them from
-Yang, X. (2020), *Application and comparison of different methods for aquifer
-test analysis using TTim*, MSc thesis, TU Delft.
-
-## Worked examples from Kruseman and de Ridder
-
-Transcribed by hand from Kruseman, G.P. and de Ridder, N.A. (1994), *Analysis
-and evaluation of pumping test data*, 2nd edition, ILRI Publication 47,
-Wageningen. The page numbers are those printed in the book.
-
-| File | Example | Table, page | Published result |
-|---|---|---|---|
-| `well1_steps.txt` | Step-drawdown "Well 1" (Clark 1977) | Table 14.2, p. 205 | B = 3.26e-3 d/m2, C = 1.45e-7 d2/m5 (Hantush-Bierschenk, graphical) |
-| `hoogezand.txt` | Single-well test "Hoogezand" (Mulder 1983) | Table 15.1, p. 224 | KD = 1800 m2/d (Jacob, t > 41 s); S = 4e-4, c = 1000 d after Mulder |
-
-The Vennebulten unconfined test (Table 5.1, p. 106) is the same data as
-`venne_deep.txt`; the published Neuman analysis (pp. 104 to 106) gives
-KhD = 1447 m2/d (type A) and 1616 m2/d (type B), SA = 5.2e-4, Sy = 4.9e-3 and
-beta = 0.01. The book itself calls that Sy unreasonably low.
+The AQTESOLV parameter values the tests compare against are those tabulated
+in the TTim notebooks, which take them from Yang, X. (2020), *Application and
+comparison of different methods for aquifer test analysis using TTim*, MSc
+thesis, TU Delft.
 
 ## Lauswiesen, Tuebingen (CC BY-SA 4.0)
 

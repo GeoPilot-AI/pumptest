@@ -151,7 +151,6 @@ recharge boundaries, and slug tests. Nothing in the package does them today.
 - Cooper, H.H. and Jacob, C.E. (1946). A generalized graphical method for evaluating formation constants and summarizing well-field history. *Trans. AGU* 27(4), 526-534.
 - Hantush, M.S. and Jacob, C.E. (1955). Non-steady radial flow in an infinite leaky aquifer. *Trans. AGU* 36(1), 95-100.
 - Jacob, C.E. (1947). Drawdown test to determine effective radius of artesian well. *Trans. ASCE* 112, 1047-1064.
-- Kruseman, G.P. and de Ridder, N.A. (1994). *Analysis and evaluation of pumping test data*, 2nd ed. ILRI Publication 47.
 - Neuman, S.P. (1974). Effect of partial penetration on flow in unconfined aquifers considering delayed gravity response. *Water Resources Research* 10(2), 303-312.
 - Papadopulos, I.S. and Cooper, H.H. (1967). Drawdown in a well of large diameter. *Water Resources Research* 3(1), 241-244.
 - Stehfest, H. (1970). Algorithm 368: Numerical inversion of Laplace transforms. *Communications of the ACM* 13(1), 47-49.

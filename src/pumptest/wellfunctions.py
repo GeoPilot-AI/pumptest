@@ -1,9 +1,9 @@
 """Dimensionless well functions: the type curves of the classic solutions.
 
-These are the tabulated functions of the textbooks (Kruseman and de Ridder,
-1994), exposed so a user can draw type curves or check a value against a
-table. The fitted models use them where a closed form exists and the Laplace
-kernels in :mod:`pumptest.radial` and :mod:`pumptest.neuman` where it does not.
+These are the functions tabulated in the original papers, exposed so a
+user can draw type curves or check a value against a table. The fitted
+models use them where a closed form exists and the Laplace kernels in
+:mod:`pumptest.radial` and :mod:`pumptest.neuman` where it does not.
 """
 
 from __future__ import annotations

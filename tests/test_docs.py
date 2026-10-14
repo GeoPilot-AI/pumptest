@@ -15,8 +15,8 @@ REPO = Path(__file__).resolve().parents[1]
 
 NUMBER_TOLERANCE = 5e-3
 """Fits land a few parts in ten thousand apart across platforms and scipy
-versions (Dalem's aquitard resistance: 331.0 on Windows, 331.3 on Linux), so
-numbers are compared to this relative tolerance and words exactly."""
+versions, so numbers are compared to this relative tolerance and words
+exactly."""
 
 
 def _same(a: str, b: str) -> bool:

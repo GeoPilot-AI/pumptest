@@ -1,17 +1,17 @@
-# Confined aquifer, several wells
+# Several observation wells
 
-The Oude Korendijk test (Kruseman and de Ridder, 1994) pumped a 7 m confined
-aquifer of coarse sand at 788 m³/d for about 14 hours, with piezometers 30 m
-and 90 m from the well. It ships with the package.
+The Sioux Flats test from the AQTESOLV manual (Duffield, 2007) pumped
+6606 m³/d for about 1.4 days, with observation wells 30.5 m, 61 m and 122 m
+from the pumped well. It ships with the package.
 
 ## Load and look
 
 ```python
 from pumptest import datasets
 
-test = datasets.load("oude_korendijk")
+test = datasets.load("sioux_flats")
 for obs in test.observations:
-    print(obs.name, obs.distance, "m:", obs.time.size, "readings, last", obs.drawdown[-1], "m")
+    print(obs.name, round(obs.distance, 1), "m:", obs.time.size, "readings, last", obs.drawdown[-1], "m")
 ```
 
 ## A quick Cooper-Jacob check
@@ -22,15 +22,15 @@ data are in the range where it is valid (u ≤ 0.05):
 ```python
 from pumptest import cooper_jacob
 
-h30 = test.observations[0]
-cj = cooper_jacob(h30.time, h30.drawdown, rate=788.0, distance=30.0)
+ow100 = test.observations[0]
+cj = cooper_jacob(ow100.time, ow100.drawdown, rate=6605.754, distance=ow100.distance)
 print(f"T = {cj.transmissivity:.0f} m2/d, S = {cj.storativity:.2e}, u_max = {cj.u_max:.3f}")
 ```
 
-## Fit Theis to both piezometers at once
+## Fit Theis to all three wells at once
 
 Fitting every observation together gives one set of aquifer parameters that
-must explain all of them, which is what AQTESOLV calls a composite fit:
+must explain all of them:
 
 ```python
 from pumptest import Theis, fit
@@ -39,23 +39,22 @@ result = fit(test, Theis())
 print(result.summary())
 ```
 
-The result matches AQTESOLV: T = 462.6 m²/d, S = 1.78 × 10⁻⁴, RMSE 0.050 m
-(see [Validation](../validation.md)).
+The result matches the AQTESOLV analysis: T = 4310 m²/d against 4308, and
+S = 0.0641 against 0.0642 (see [Validation](../validation.md)).
 
-## Fit each piezometer on its own
+## Fit each well on its own
 
 ```python
-for name in ("H30", "H90"):
+for name in ("OW100", "OW200", "OW400"):
     single = fit(test, Theis(), observations=[name])
-    print(name, round(single.values["T"]), f"{single.values['S']:.2e}")
+    print(name, round(single.values["T"]), f"{single.values['S']:.3e}")
 ```
 
-Fitted alone, the two piezometers agree on T to within about 5 percent
-(480 and 501 m²/d) but differ by a factor of about two in S. That is
-typical: storativity depends on the early data and on the exact distance,
-and is usually the less certain of the two. The composite fit is the
-defensible single answer; the spread between the single-well fits is a fair
-statement of its uncertainty.
+Fitted alone, the three wells give transmissivities between 4278 and
+4301 m²/d and storativities between 0.062 and 0.067. When single-well fits
+agree this closely, one Theis solution describes the whole test; when they
+do not, the composite fit is a compromise and the residuals show where it
+fails.
 
 ## Plot it
 
@@ -71,7 +70,7 @@ for obs in test.observations:
 ax.set_xlabel("time since pumping started (d)")
 ax.set_ylabel("drawdown (m)")
 ax.legend()
-fig.savefig("oude_korendijk.png", dpi=150)
+fig.savefig("sioux_flats.png", dpi=150)
 ```
 
 `Model.drawdown(values, test, observation, t)` evaluates any model at any

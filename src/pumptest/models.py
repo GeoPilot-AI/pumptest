@@ -150,8 +150,8 @@ class PapadopulosCooper(Model):
     factor (Agarwal et al., 1970) is fitted as well. With
     ``casing_radius=True`` the effective casing radius rc is fitted instead of
     taken from the well: a pump column or riser in the casing shrinks the
-    area the water level falls in, and the Hoogezand test showed a record that
-    a 0.185 m casing could not produce.
+    area the water level falls in, which shows as early drawdown faster than
+    the nominal casing allows.
     """
 
     name = "Papadopulos-Cooper"
