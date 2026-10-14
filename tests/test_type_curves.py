@@ -99,13 +99,27 @@ def test_hantush_limits() -> None:
     assert hantush_w(1e-8, 0.5)[()] == pytest.approx(2.0 * special.k0(0.5), rel=1e-6)
 
 
+# (u, r/L, W): Annex 4.2 (after Hantush 1956), three figures. The annex prints
+# 4.89 at u = 2e-3, r/L = 0.08 between neighbours 5.12 and 4.85 that both
+# evaluations below reproduce; both give 4.985 there, so that cell is skipped.
+HANTUSH = [
+    (1e-4, 0.02, 7.84), (4e-4, 0.07, 5.55), (1e-3, 0.05, 5.80),
+    (2e-3, 0.07, 5.12), (2e-3, 0.09, 4.85), (1e-2, 0.09, 3.85),
+]  # fmt: skip
+
+
 def test_hantush_table_values() -> None:
-    # Annex 4.2 (after Hantush 1956), W(u, r/L), three figures. The annex prints
-    # 4.89 at u = 2e-3, r/L = 0.08 between neighbours 5.12 and 4.85 that this
-    # function reproduces exactly; 4.98 is the value, so that cell is skipped.
-    cases = [
-        (0.0, 0.01, 9.44), (1e-4, 0.02, 7.84), (4e-4, 0.07, 5.55),
-        (1e-3, 0.05, 5.80), (2e-3, 0.09, 4.85), (1e-2, 0.09, 3.85),
-    ]  # fmt: skip
+    cases = [(0.0, 0.01, 9.44), *HANTUSH]
     for u, rho, expected in cases:
         assert hantush_w(u, rho)[()] == pytest.approx(expected, rel=TABLE_TOLERANCE)
+
+
+@pytest.mark.parametrize(("u", "rho", "expected"), HANTUSH)
+def test_hantush_table_through_the_laplace_kernel(u: float, rho: float, expected: float) -> None:
+    # The fitted Hantush-Jacob model runs through the Laplace kernel, not the
+    # quadrature above, so the table checks that path too. Unit T, r and S.
+    def transform(p: np.ndarray) -> np.ndarray:
+        return radial_drawdown_laplace(p, 1.0, 1.0, 1.0, leakage_factor=1.0 / rho)
+
+    w = 4.0 * math.pi * float(invert(transform, [1.0 / (4.0 * u)])[0])
+    assert w == pytest.approx(expected, rel=TABLE_TOLERANCE)
