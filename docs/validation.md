@@ -28,9 +28,10 @@ tabulated in the TTim notebooks. Provenance is in
 
 ## Against the published type-curve tables
 
-Theis is checked against Abramowitz and Stegun (Table 5.1), and Hantush,
-Neuman and Papadopulos-Cooper against Kruseman and de Ridder (1994),
-Annexes 4.2, 5.1 and 15.1, within the tables' three-figure rounding.
+Theis is checked against the exponential integral summed from its power
+series in 60-digit decimal arithmetic, and Hantush, Neuman and
+Papadopulos-Cooper against Kruseman and de Ridder (1994), Annexes 4.2, 5.1
+and 15.1, within the tables' three-figure rounding.
 See `tests/test_type_curves.py`.
 
 ## Worked examples from Kruseman and de Ridder (1994)

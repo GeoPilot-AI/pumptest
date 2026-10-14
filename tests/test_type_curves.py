@@ -84,7 +84,8 @@ def test_papadopulos_cooper_table(alpha: float, inv_u: float, expected: float) -
 
 
 def test_theis_w_known_values() -> None:
-    # E1 to nine figures (Abramowitz and Stegun, Table 5.1).
+    # E1 to nine figures, independent of SciPy: the power series
+    # -gamma - ln u - sum((-u)**k / (k * k!)) summed in 60-digit decimal arithmetic.
     u = [1e-4, 1e-2, 0.1, 1.0, 5.0]
     expected = [8.633224705, 4.037929577, 1.822923958, 0.219383934, 0.001148296]
     assert np.allclose(theis_w(u), expected, rtol=1e-8)
