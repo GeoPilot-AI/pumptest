@@ -35,7 +35,8 @@ def test_validation_page_matches_a_fresh_run() -> None:
         check=True,
     ).stdout
     committed = (REPO / "docs" / "validation.md").read_text(encoding="utf-8")
-    new, old = re.split(r"[\s|]+", fresh.strip()), re.split(r"[\s|]+", committed.strip())
+    tokens = re.compile(r"[\s|,;]+")
+    new, old = tokens.split(fresh.strip()), tokens.split(committed.strip())
     hint = "run: python scripts/validation_report.py --write"
     assert len(new) == len(old), hint
     drift = [(a, b) for a, b in zip(old, new, strict=True) if not _same(a, b)]
@@ -44,6 +45,7 @@ def test_validation_page_matches_a_fresh_run() -> None:
 
 def test_number_comparison_is_tolerant_but_not_blind() -> None:
     assert _same("331", "331.3")
+    assert _same("25.53", "25.5")
     assert not _same("331", "340")
     assert not _same("Theis", "Neuman")
 
