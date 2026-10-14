@@ -187,7 +187,8 @@ _PUBLISHED = {
             "welltestpy (Mueller et al. 2022)",
             "Theis",
             {"T": math.exp(ln_t) * 86400.0, "S": math.exp(ln_s)},
-            note="Fitted to all five wells, the pumped well included.",
+            note="Fitted to all five wells, the pumped well included, after welltestpy's "
+            "smoothing and resampling to ten times per well.",
         )
         for t, (ln_t, ln_s) in _WELLTESTPY.items()
     },

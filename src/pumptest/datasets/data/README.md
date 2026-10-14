@@ -76,3 +76,8 @@ second in all five wells B1 to B5 (time in seconds, drawdown in metres).
 - Published values: the Theis estimates of that workflow
   (`results/01b_estimate/<test>/estimate.txt`, mean ln T in m2/s and ln S),
   fitted by welltestpy to all five wells of each test.
+  welltestpy does not fit the raw records: it normalises the rate, low-pass
+  filters each record and keeps ten quadratically spaced times per well from
+  10 s. `tests/test_validation_welltestpy.py` repeats that preprocessing and
+  reproduces the published estimates; fits to the raw records differ from
+  them by up to 3.5 percent in transmissivity.
