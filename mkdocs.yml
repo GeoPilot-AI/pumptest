@@ -1,5 +1,6 @@
 site_name: pumptest
 site_description: Pumping test analysis in Python
+repo_url: https://github.com/GeoPilot-AI/pumptest
 nav:
   - Home: index.md
   - Solutions: solutions.md

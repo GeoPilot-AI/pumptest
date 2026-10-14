@@ -14,16 +14,16 @@ specific yield and well losses from drawdown data.
   five real tests, and against the published type-curve tables. See
   [docs/validation.md](docs/validation.md).
 
-Runtime dependencies are numpy and scipy only. MIT licence.
+Runtime dependencies are numpy and scipy only. MIT licence, copyright
+Piezoline Technologies Private Limited.
 
 ## Install
 
-```
-pip install pumptest
-```
+The package is not on PyPI yet. Install it from GitHub:
 
-The package is not on PyPI yet; until it is, install from a clone with
-`pip install -e .`.
+```
+pip install git+https://github.com/GeoPilot-AI/pumptest
+```
 
 ## Example
 

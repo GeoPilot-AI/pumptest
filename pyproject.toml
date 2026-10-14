@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Pumping test and aquifer test analysis: Theis, Cooper-Jacob, Hantush, Papadopulos-Cooper, Neuman, recovery and step-drawdown, validated against published AQTESOLV fits."
 readme = "README.md"
 authors = [
-    { name = "Jagadeesh Gaddam", email = "smartbhujal0@gmail.com" }
+    { name = "Jagadeesh Gaddam", email = "jagadeesh@smartbhujal.com" }
 ]
 requires-python = ">=3.11"
 license = "MIT"
@@ -17,6 +17,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Hydrology",
 ]
 dependencies = ["numpy>=1.24", "scipy>=1.10"]
+
+[project.urls]
+Homepage = "https://github.com/GeoPilot-AI/pumptest"
+Repository = "https://github.com/GeoPilot-AI/pumptest"
+Issues = "https://github.com/GeoPilot-AI/pumptest/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "mypy>=1.10", "pre-commit>=3", "pip-licenses>=5"]
