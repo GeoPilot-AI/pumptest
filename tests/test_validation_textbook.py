@@ -40,7 +40,9 @@ def test_well1_step_drawdown_fits_better_than_the_published_line() -> None:
 
 def _from(test: PumpingTest, seconds: float, well: Well | None = None) -> PumpingTest:
     obs = test.observations[0]
-    keep = obs.time >= seconds * SECOND
+    # Times are whole seconds stored in days; cutting half a second early keeps
+    # the point at the cut whichever way its conversion rounded.
+    keep = obs.time >= (seconds - 0.5) * SECOND
     return PumpingTest(
         well or test.well,
         test.schedule,

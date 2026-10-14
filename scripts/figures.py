@@ -142,7 +142,9 @@ def parity_figure() -> Path:
 def single_well_figure() -> Path:
     hz = datasets.load("hoogezand")
     t, s = hz.observations[0].time, hz.observations[0].drawdown
-    keep = t >= 5.0 / 86400.0
+    # From 5 s, as on the validation page; half a second early so that the 5 s
+    # point is kept whichever way its conversion to days rounded.
+    keep = t >= 4.5 / 86400.0
     test = PumpingTest(hz.well, hz.schedule, [Observation("pumped well", 0.0, t[keep], s[keep])])
     model = PapadopulosCooper(skin=True, casing_radius=True)
     result = fit(test, model, fixed={"S": 4e-4})
