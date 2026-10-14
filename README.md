@@ -83,3 +83,7 @@ see [Contributing](docs/contributing.md).
 ## Licence
 
 MIT. Copyright 2026 Piezoline Technologies Private Limited.
+
+The bundled test data keep their own licences, listed in
+[`src/pumptest/datasets/data/README.md`](src/pumptest/datasets/data/README.md).
+The Lauswiesen records are CC BY-SA 4.0.

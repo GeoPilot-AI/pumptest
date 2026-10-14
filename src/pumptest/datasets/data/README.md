@@ -55,3 +55,24 @@ The Vennebulten unconfined test (Table 5.1, p. 106) is the same data as
 `venne_deep.txt`; the published Neuman analysis (pp. 104 to 106) gives
 KhD = 1447 m2/d (type A) and 1616 m2/d (type B), SA = 5.2e-4, Sy = 4.9e-3 and
 beta = 0.01. The book itself calls that Sy unreasonably low.
+
+## Lauswiesen, Tuebingen (CC BY-SA 4.0)
+
+`lauswiesen_B2.txt.gz` to `lauswiesen_B5.txt.gz` hold four pumping tests at the
+Lauswiesen research site, each pumped in one of wells B2 to B5 and logged once a
+second in all five wells B1 to B5 (time in seconds, drawdown in metres).
+
+- Data: Leven, C. (2020), *Pumping Test Data from the Hydrogeological Research
+  Site "Lauswiesen"*, University of Tuebingen, https://doi.org/10.57754/fdat.hma1z-00r32,
+  licensed under Creative Commons Attribution-ShareAlike 4.0
+  (https://creativecommons.org/licenses/by-sa/4.0/). These four files keep
+  that licence; the rest of pumptest is MIT.
+- Converted by `scripts/import_lauswiesen.py` from `data/lauswiesen.cmp` in the
+  archived workflow of Mueller, S., Leven, C., Dietrich, P., Attinger, S. and
+  Zech, A. (2022), "How to find aquifer statistics utilizing pumping tests? Two
+  field studies using welltestpy", *Groundwater* 60(1), 137-144,
+  https://doi.org/10.1111/gwat.13121; workflow at
+  https://doi.org/10.5281/zenodo.4724118 (MIT). Only the file format changed.
+- Published values: the Theis estimates of that workflow
+  (`results/01b_estimate/<test>/estimate.txt`, mean ln T in m2/s and ln S),
+  fitted by welltestpy to all five wells of each test.

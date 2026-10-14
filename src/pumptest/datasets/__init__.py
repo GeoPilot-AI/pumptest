@@ -11,8 +11,11 @@ licences are in ``data/README.md`` next to this module.
 
 from __future__ import annotations
 
+import gzip
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from functools import partial
 from importlib import resources
 
 import numpy as np
@@ -88,13 +91,42 @@ def _vennebulten() -> PumpingTest:
     return PumpingTest(Well(0.2), Schedule.constant(873.0), obs, 21.0, "Vennebulten")
 
 
+_LAUSWIESEN_XY = {
+    "B1": (67.715, 18.863),
+    "B2": (63.877, 22.201),
+    "B3": (71.009, 28.88),
+    "B4": (48.742, 20.038),
+    "B5": (48.908, 35.283),
+}
+_LAUSWIESEN_RATE = {"B2": 0.00653, "B3": 0.00594, "B4": 0.00625, "B5": 0.00604}  # m3/s
+
+
+def _lauswiesen(test: str) -> PumpingTest:
+    path = resources.files(__package__).joinpath("data", f"lauswiesen_{test}.txt.gz")
+    with path.open("rb") as raw, gzip.open(raw, "rt", encoding="utf-8") as fh:
+        table: FloatArray = np.loadtxt(fh, comments="#")
+    table = table[table[:, 0] > 0]
+    x0, y0 = _LAUSWIESEN_XY[test]
+    obs = [
+        Observation(
+            well,
+            0.0 if well == test else math.hypot(x - x0, y - y0),
+            table[:, 0] * SECOND,
+            table[:, column],
+        )
+        for column, (well, (x, y)) in enumerate(_LAUSWIESEN_XY.items(), start=1)
+    ]
+    rate = _LAUSWIESEN_RATE[test] * 86400.0
+    return PumpingTest(Well(0.0762), Schedule.constant(rate), obs, 5.0, f"Lauswiesen {test}")
+
+
 def _hoogezand() -> PumpingTest:
     raw = _read("hoogezand.txt")
     obs = [Observation("pumped well", 0.0, raw[:, 0] * SECOND, raw[:, 1])]
     return PumpingTest(Well(0.185), Schedule.constant(28.7 * 24.0), obs, None, "Hoogezand")
 
 
-_LOADERS = {
+_LOADERS: dict[str, Callable[[], PumpingTest]] = {
     "oude_korendijk": _oude_korendijk,
     "gridley": _gridley,
     "sioux_flats": _sioux_flats,
@@ -102,6 +134,16 @@ _LOADERS = {
     "dalem": _dalem,
     "vennebulten": _vennebulten,
     "hoogezand": _hoogezand,
+    **{f"lauswiesen_{t.lower()}": partial(_lauswiesen, t) for t in _LAUSWIESEN_RATE},
+}
+
+# Theis estimates by welltestpy, from the archived workflow of Mueller et al.
+# (2022): mean ln T (T in m2/s) and ln S, fitted to every well of each test.
+_WELLTESTPY = {
+    "B2": (-4.041889357980989, -2.135803320654749),
+    "B3": (-4.599175133715375, -2.087130985265375),
+    "B4": (-4.469906947665516, -2.558349156725309),
+    "B5": (-3.687795829848876, -3.341085358753064),
 }
 
 _T_TEXAS, _T_DALEM = 224.726 * 15.24, 45.332 * 37.0
@@ -140,6 +182,15 @@ _PUBLISHED = {
         {"T": 1800.0, "S": 4e-4},
         note="Jacob straight line for t > 41 s; leaky aquifer with c = 1000 d.",
     ),
+    **{
+        f"lauswiesen_{t.lower()}": Published(
+            "welltestpy (Mueller et al. 2022)",
+            "Theis",
+            {"T": math.exp(ln_t) * 86400.0, "S": math.exp(ln_s)},
+            note="Fitted to all five wells, the pumped well included.",
+        )
+        for t, (ln_t, ln_s) in _WELLTESTPY.items()
+    },
 }
 
 
