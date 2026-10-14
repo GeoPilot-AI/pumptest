@@ -18,6 +18,7 @@ from pumptest import HantushJacob, Model, Observation, PumpingTest, Schedule, Th
 TIMES = np.logspace(-4, 0, 30)
 DISTANCES = (20.0, 60.0)
 NOISE = 0.005
+THICKNESS = 20.0  # used only by the unconfined model
 CASES = [
     (Theis(), {"T": 300.0, "S": 2e-4}),
     (HantushJacob(), {"T": 300.0, "S": 2e-4, "B": 600.0}),
@@ -30,7 +31,9 @@ def _noisy(
     well, schedule = Well(0.1), Schedule.constant(500.0)
     obs = []
     for r in DISTANCES:
-        template = PumpingTest(well, schedule, [Observation("o", r, TIMES, np.ones_like(TIMES))])
+        template = PumpingTest(
+            well, schedule, [Observation("o", r, TIMES, np.ones_like(TIMES))], THICKNESS
+        )
         clean = model.drawdown(truth, template, template.observations[0])
         # AR(1) noise with stationary standard deviation NOISE.
         e = np.empty(TIMES.size)
@@ -38,7 +41,7 @@ def _noisy(
         for i in range(1, TIMES.size):
             e[i] = rho * e[i - 1] + rng.normal(0.0, NOISE * np.sqrt(1.0 - rho**2))
         obs.append(Observation(f"r{r:g}", r, TIMES, clean + e))
-    return PumpingTest(well, schedule, obs)
+    return PumpingTest(well, schedule, obs, THICKNESS)
 
 
 def _coverage(
