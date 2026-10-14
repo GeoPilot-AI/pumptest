@@ -44,11 +44,12 @@ def test_gridley_with_pumping_well_matches_aqtesolv(gridley: PumpingTest) -> Non
 
 
 def test_texas_hill_leaky_matches_aqtesolv(texas_hill: PumpingTest) -> None:
-    # AQTESOLV Hantush-Jacob: K = 224.726 m/d, Ss = 2.125e-4 /m, c = 43.964 d.
-    t_pub = 224.726 * 15.24
-    published = {"T": t_pub, "S": 2.125e-4 * 15.24, "B": math.sqrt(t_pub * 43.964)}
+    # AQTESOLV Hantush-Jacob (Yang 2020, Table 18): K = 224.723 m/d, Ss = 2.125e-4 /m,
+    # c = 43.965 d, with the casing radius fixed at 0.5 ft.
+    t_pub = 224.723 * 15.24
+    published = {"T": t_pub, "S": 2.125e-4 * 15.24, "B": math.sqrt(t_pub * 43.965)}
     result = fit(texas_hill, HantushJacob())
     assert result.values["T"] == pytest.approx(published["T"], rel=0.002)
     assert result.values["S"] == pytest.approx(published["S"], rel=0.01)
-    assert result.derived["c"] == pytest.approx(43.964, rel=0.01)
+    assert result.derived["c"] == pytest.approx(43.965, rel=0.01)
     assert result.rmse <= rmse_at(texas_hill, HantushJacob(), published) + 1e-9

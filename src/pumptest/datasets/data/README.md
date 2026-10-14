@@ -32,10 +32,12 @@ TTim is released under the MIT licence:
 | `sioux100.txt`, `200`, `400` | Sioux Flats, South Dakota | AQTESOLV manual (Duffield, 2007) |
 | `texas40.txt`, `80`, `160` | Texas Hill, leaky | AQTESOLV manual (Duffield, 2007) |
 
-The AQTESOLV parameter values the tests compare against are those tabulated
-in the TTim notebooks, which take them from Yang, X. (2020), *Application and
-comparison of different methods for aquifer test analysis using TTim*, MSc
-thesis, TU Delft.
+The AQTESOLV parameter values the tests compare against are those in
+Yang, X. (2020), *Application and comparison of different methods for aquifer
+test analysis using TTim*, MSc thesis, TU Delft: Table 8 (Gridley), Table 9
+(Sioux Flats) and Table 18 (Texas Hill, where AQTESOLV fixed the casing radius
+at 0.5 ft). They were checked against the thesis, which the TTim notebooks
+quote with slightly different rounding for Texas Hill.
 
 ## Lauswiesen, Tuebingen (CC BY-SA 4.0)
 

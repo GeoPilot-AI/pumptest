@@ -117,7 +117,7 @@ _WELLTESTPY = {
     "B5": (-3.687795829848876, -3.341085358753064),
 }
 
-_T_TEXAS = 224.726 * 15.24
+_T_TEXAS = 224.723 * 15.24
 _PUBLISHED = {
     "gridley": Published(
         "AQTESOLV (Yang 2020)", "Theis", {"T": 37.803 * 5.4846, "S": 1.356e-6 * 5.4846}
@@ -128,8 +128,8 @@ _PUBLISHED = {
     "texas_hill": Published(
         "AQTESOLV (Yang 2020)",
         "Hantush-Jacob",
-        {"T": _T_TEXAS, "S": 2.125e-4 * 15.24, "B": math.sqrt(_T_TEXAS * 43.964)},
-        derived={"c": 43.964},
+        {"T": _T_TEXAS, "S": 2.125e-4 * 15.24, "B": math.sqrt(_T_TEXAS * 43.965)},
+        derived={"c": 43.965},
     ),
     **{
         f"lauswiesen_{t.lower()}": Published(
