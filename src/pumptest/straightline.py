@@ -151,6 +151,15 @@ class StepTestResult:
 
         return self.aquifer_loss_coefficient * rate + self.well_loss_coefficient * rate**2
 
+    def drawdown_curve(self, rates: npt.ArrayLike) -> npt.NDArray[np.float64]:
+        """Predicted drawdown at each of ``rates``."""
+
+        q = np.asarray(rates, dtype=np.float64)
+        curve: npt.NDArray[np.float64] = (
+            self.aquifer_loss_coefficient * q + self.well_loss_coefficient * q * q
+        )
+        return curve
+
 
 def step_drawdown(rates: npt.ArrayLike, drawdowns: npt.ArrayLike) -> StepTestResult:
     """Fit s = B Q + C Q**2 to the drawdown reached in each step.

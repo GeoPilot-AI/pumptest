@@ -7,6 +7,7 @@
 Units are the caller's to keep consistent; see :mod:`pumptest.units`.
 """
 
+from pumptest import datasets
 from pumptest.data import Observation, PumpingTest, Schedule, Well
 from pumptest.diagnostics import log_derivative
 from pumptest.fit import FitResult, compare, fit
@@ -40,6 +41,7 @@ __all__ = [
     "__version__",
     "compare",
     "cooper_jacob",
+    "datasets",
     "fit",
     "hantush_w",
     "log_derivative",
